@@ -1,6 +1,21 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const users = require("../models/User");
+
+// Email validation regex
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Password validation: minimum 8 chars, 1 uppercase, 1 number, 1 special char
+const validatePassword = (password) => {
+  const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  return passwordRegex.test(password);
+};
+
+// Email validation
+const validateEmail = (email) => {
+  return emailRegex.test(email);
+};
+
 const register = async (req, res) => {
 
   const { name, email, password } = req.body;
@@ -8,6 +23,18 @@ const register = async (req, res) => {
   if (!name || !email || !password) {
     return res.status(400).json({
       message: "All fields are required"
+    });
+  }
+
+  if (!validateEmail(email)) {
+    return res.status(400).json({
+      message: "Invalid email format"
+    });
+  }
+
+  if (!validatePassword(password)) {
+    return res.status(400).json({
+      message: "Password must be at least 8 characters with 1 uppercase letter, 1 number, and 1 special character (@$!%*?&)"
     });
   }
 
@@ -47,6 +74,12 @@ const login = async (req, res) => {
   if (!email || !password) {
     return res.status(400).json({
       message: "Email and password are required"
+    });
+  }
+
+  if (!validateEmail(email)) {
+    return res.status(400).json({
+      message: "Invalid email format"
     });
   }
 
