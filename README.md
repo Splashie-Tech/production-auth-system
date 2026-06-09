@@ -28,7 +28,6 @@ ACCESS_TOKEN_SECRET=your_access_secret
 
 REFRESH_TOKEN_SECRET=your_refresh_secret
 
-RESET_TOKEN_SECRET=your_reset_secret
 ```
 
 ## Start Server
@@ -43,25 +42,73 @@ node server.js
 
 POST /api/register
 
+Request Body:
+```json
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "password": "StrongPass1!"
+}
+```
+
+Password must be at least 8 characters and include an uppercase letter, a number, and a special character.
+
 ### Login
 
 POST /api/login
+
+Request Body:
+```json
+{
+  "email": "jane@example.com",
+  "password": "StrongPass1!"
+}
+```
 
 ### Refresh Token
 
 POST /api/refresh
 
+Request Body:
+```json
+{
+  "refreshToken": "<refresh-token>"
+}
+```
+
 ### Logout
 
 POST /api/logout
+
+Request Body:
+```json
+{
+  "refreshToken": "<refresh-token>"
+}
+```
 
 ### Forgot Password
 
 POST /api/forgot-password
 
+Request Body:
+```json
+{
+  "email": "jane@example.com"
+}
+```
+
 ### Reset Password
 
 POST /api/reset-password
+
+Request Body:
+```json
+{
+  "token": "<reset-token>",
+  "newPassword": "NewStrongPass1!"
+}
+```
 
 ### Admin Route
 
