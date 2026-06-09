@@ -150,19 +150,32 @@ const refresh = (req, res) => {
       process.env.REFRESH_TOKEN_SECRET
     );
 
-    const newAccessToken = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "15m" }
-    );
+const newAccessToken = jwt.sign(
+  {
+    id: user.id,
+    email: user.email,
+    role: user.role
+  },
+  process.env.ACCESS_TOKEN_SECRET,
+  { expiresIn: "15m" }
+);
 
-    return res.json({
-      accessToken: newAccessToken
-    });
+const newRefreshToken = jwt.sign(
+  {
+    id: user.id,
+    email: user.email,
+    role: user.role
+  },
+  process.env.REFRESH_TOKEN_SECRET,
+  { expiresIn: "7d" }
+);
+
+user.refreshToken = newRefreshToken;
+
+return res.json({
+  accessToken: newAccessToken,
+  refreshToken: newRefreshToken
+});
 
   } catch (err) {
     return res.status(403).json({
