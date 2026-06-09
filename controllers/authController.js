@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const users = require("../models/User");
 
 // Email validation regex
@@ -170,8 +171,87 @@ const refresh = (req, res) => {
   }
 };
 
+const logout = (req, res) => {
+
+  const { refreshToken } = req.body;
+
+  const user = users.find(
+    u => u.refreshToken === refreshToken
+  );
+
+  if (user) {
+    user.refreshToken = null;
+  }
+
+  return res.json({
+    message: "Logged out successfully"
+  });
+};
+
+const forgotPassword = (req, res) => {
+
+  const { email } = req.body;
+
+  const user =
+    users.find(u => u.email === email);
+
+  if (!user) {
+
+    return res.status(404).json({
+      message: "User not found"
+    });
+
+  }
+
+  const resetToken =
+    crypto.randomBytes(32).toString("hex");
+
+  user.resetToken = resetToken;
+
+  user.resetTokenExpiry =
+    Date.now() + 15 * 60 * 1000;
+
+  return res.json({
+    resetToken
+  });
+
+};
+
+const resetPassword = async (req, res) => {
+
+  const { token, newPassword } = req.body;
+
+  const user = users.find(
+    u =>
+      u.resetToken === token &&
+      u.resetTokenExpiry > Date.now()
+  );
+
+  if (!user) {
+
+    return res.status(400).json({
+      message: "Invalid or expired token"
+    });
+
+  }
+
+  user.password =
+    await bcrypt.hash(newPassword, 10);
+
+  user.resetToken = null;
+  user.resetTokenExpiry = null;
+
+  return res.json({
+    message: "Password reset successful"
+  });
+
+};
+
 module.exports = {
   register,
   login,
-  refresh
+  refresh,
+  logout,
+  forgotPassword,
+  resetPassword
 };
