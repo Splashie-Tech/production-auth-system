@@ -57,7 +57,7 @@ const register = async (req, res) => {
   name,
   email,
   password: hashedPassword,
-  role: "user",
+  role: "user", // Default role for testing
   refreshToken: null
 };
 
