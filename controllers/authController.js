@@ -3,6 +3,9 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const users = require("../models/User");
 
+// Authentication controller manages user registration, login, token refresh,
+// logout, and password reset flows.
+
 // Email validation regex
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -17,10 +20,12 @@ const validateEmail = (email) => {
   return emailRegex.test(email);
 };
 
+// Register a new user and store hashed credentials.
 const register = async (req, res) => {
 
   const { name, email, password } = req.body;
 
+  // Verify required registration fields are present
   if (!name || !email || !password) {
     return res.status(400).json({
       message: "All fields are required"
@@ -39,6 +44,7 @@ const register = async (req, res) => {
     });
   }
 
+  // Prevent duplicate email registrations
   const existingUser = users.find(
     user => user.email === email
   );
@@ -49,6 +55,7 @@ const register = async (req, res) => {
     });
   }
 
+  // Hash password before storing it
   const hashedPassword =
     await bcrypt.hash(password, 10);
 
@@ -69,6 +76,7 @@ const register = async (req, res) => {
 
 };
 
+// Authenticate a user and issue access + refresh tokens.
 const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -124,6 +132,7 @@ const login = async (req, res) => {
 
 };
 
+// Refresh the access token using a valid refresh token.
 const refresh = (req, res) => {
 
   const { refreshToken } = req.body;
@@ -134,6 +143,7 @@ const refresh = (req, res) => {
     });
   }
 
+  // Find user by stored refresh token
   const user = users.find(
     u => u.refreshToken === refreshToken
   );
@@ -150,32 +160,33 @@ const refresh = (req, res) => {
       process.env.REFRESH_TOKEN_SECRET
     );
 
-const newAccessToken = jwt.sign(
-  {
-    id: user.id,
-    email: user.email,
-    role: user.role
-  },
-  process.env.ACCESS_TOKEN_SECRET,
-  { expiresIn: "15m" }
-);
+    // Issue a new access token and persist the new refresh token
+    const newAccessToken = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "15m" }
+    );
 
-const newRefreshToken = jwt.sign(
-  {
-    id: user.id,
-    email: user.email,
-    role: user.role
-  },
-  process.env.REFRESH_TOKEN_SECRET,
-  { expiresIn: "7d" }
-);
+    const newRefreshToken = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role
+      },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: "7d" }
+    );
 
-user.refreshToken = newRefreshToken;
+    user.refreshToken = newRefreshToken;
 
-return res.json({
-  accessToken: newAccessToken,
-  refreshToken: newRefreshToken
-});
+    return res.json({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken
+    });
 
   } catch (err) {
     return res.status(403).json({
@@ -184,6 +195,7 @@ return res.json({
   }
 };
 
+// Logout by invalidating the stored refresh token.
 const logout = (req, res) => {
 
   const { refreshToken } = req.body;
@@ -201,10 +213,12 @@ const logout = (req, res) => {
   });
 };
 
+// Generate a password reset token for a user and expire it after 15 minutes.
 const forgotPassword = (req, res) => {
 
   const { email } = req.body;
 
+  // Locate the user account by email
   const user =
     users.find(u => u.email === email);
 
@@ -230,10 +244,12 @@ const forgotPassword = (req, res) => {
 
 };
 
+// Reset the user's password when the reset token is valid.
 const resetPassword = async (req, res) => {
 
   const { token, newPassword } = req.body;
 
+  // Find user with matching token and ensure token hasn't expired
   const user = users.find(
     u =>
       u.resetToken === token &&
